@@ -28,11 +28,10 @@ app.use("/api/orders", orderRoute);
 //
 connectDB().then(() => {
   // ket noi thi moi hien
-  app.listen(PORT, () => {
+  app.listen(PORT, "0.0.0.0", () => {
     console.log(`server batws dau tren ${PORT}`);
   });
 });
-
 
 // còn 1 vài API nữa:
 // __thêm đơn hàng
