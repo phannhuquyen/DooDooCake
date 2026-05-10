@@ -1,9 +1,8 @@
 import Product from "../models/Product.js";
-// import Category from "../models/Category.js";
 
 export const getAllProducts = async (req, res) => {
   try {
-    const Products = await Product.find().sort({ createdAt: -1 }); //desc >< asc
+    const Products = await Product.find().sort({ createdAt: -1 }); //description >< asc
 
     res.status(200).json(Products);
   } catch (error) {
@@ -15,24 +14,24 @@ export const getAllProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const {
-      category,
+      categoryId,
       name,
       price,
       stock,
       sold,
-      desc,
+      description,
       details,
       status,
       images,
     } = req.body;
 
     const product = new Product({
-      category,
+      categoryId,
       name,
       price,
       stock,
       sold,
-      desc,
+      description,
       details,
       status,
       images,
@@ -49,12 +48,12 @@ export const createProduct = async (req, res) => {
 // export const updateProduct = async (req, res) => {
 //   try {
 //     const {
-//       category,
+//       categoryId,
 //       name,
 //       price,
 //       stock,
 //       sold,
-//       desc,
+//       description,
 //       details,
 //       status,
 //       images,
@@ -62,7 +61,7 @@ export const createProduct = async (req, res) => {
 //     } = req.body;
 //     const updateProduct = await Product.findByIdAndUpdate(
 //       req.params.id,
-//       { category, name, price, stock, sold, desc, details, status, images },
+//       { categoryId, name, price, stock, sold, description, details, status, images },
 //       { new: true }
 //     );
 
@@ -80,12 +79,12 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const {
-      category,
+      categoryId,
       name,
       price,
       stock,
       sold,
-      desc,
+      description,
       details,
       status,
       images,
@@ -95,12 +94,12 @@ export const updateProduct = async (req, res) => {
 
     // Tạo object chứa các trường cần cập nhật bình thường
     let updateData = {
-      category,
+      categoryId,
       name,
       price,
       stock,
       sold,
-      desc,
+      description,
       details,
       status,
       images,
@@ -124,7 +123,7 @@ export const updateProduct = async (req, res) => {
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updateQuery,
-      { new: true }
+      { new: true },
     );
 
     if (!updatedProduct) {

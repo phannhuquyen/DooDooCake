@@ -4,14 +4,19 @@ import Order from "./Order.js";
 
 const userSchema = new mongoose.Schema(
   {
+    username: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     name: {
       type: String,
-      require: true,
+      required: true,
       trim: true,
     },
     email: {
       type: String,
-      require: true,
+      required: true,
       unique: true,
       trim: true,
     },
@@ -27,7 +32,7 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      require: true,
+      required: true,
       default: "123",
     },
     role: {
@@ -52,7 +57,7 @@ const userSchema = new mongoose.Schema(
         productId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: Product,
-          require: true,
+          required: true,
         },
         quantity: { type: Number, default: 1 },
         price: { type: Number, default: 0 },

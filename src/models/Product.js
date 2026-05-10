@@ -1,19 +1,18 @@
 import mongoose from "mongoose";
 import Category from "./Category.js";
-// import Product from "./Product";
 
 const productSchema = new mongoose.Schema(
   {
-    category: {
+    categoryId: {
       type: mongoose.Schema.ObjectId,
       ref: Category,
-      require: true,
+      required: true,
     },
     name: {
       type: String,
       trim: true,
       unique: true,
-      require: true,
+      required: true,
     },
     images: {
       type: [String], // mảng link ảnh

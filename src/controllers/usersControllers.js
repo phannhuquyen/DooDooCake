@@ -14,14 +14,14 @@ export const getAllUsers = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
-    const { name, email, phone, password, role } = req.body;
+    const { username, name, email, phone, address, password, role } = req.body;
     if (role === "admin") {
       const hasAdmin = await User.findOne({ role: "admin" });
       if (hasAdmin) {
         return res.status(409).json({ message: "Da co admin roi!!!!" }); //409: Loi xung dot khong the tao moi
       }
     }
-    const user = new User({ name, email, phone, password, role });
+    const user = new User({ name, email, phone, address, password, role });
     const newUser = await user.save();
 
     res.status(201).json(newUser); //201: create thanh cong
@@ -37,7 +37,7 @@ export const updateUser = async (req, res) => {
     const updateUser = await User.findByIdAndUpdate(
       req.params.id,
       { name, email, phone, password, role, address },
-      { new: true }
+      { new: true },
     );
 
     if (!updateUser) {
@@ -112,7 +112,7 @@ export const toggleWishlist = async (req, res) => {
     }
 
     const productIndex = user.wishlist.findIndex(
-      (item) => item.equals(productId) // Sử dụng .equals() để so sánh ObjectId
+      (item) => item.equals(productId), // Sử dụng .equals() để so sánh ObjectId
     );
 
     let action;
@@ -199,15 +199,11 @@ export const createCartItem = async (req, res) => {
     }
 
     const exitingItemIndex = user.cart.findIndex(
-      (item) => item.productId.toString() === productId
+      (item) => item.productId.toString() === productId,
     );
     let message = "";
     if (exitingItemIndex > -1) {
       user.cart[exitingItemIndex].quantity = Math.max(1, quantity);
-      // user.cart[exitingItemIndex].quantity = user.cart[exitingItemIndex]
-      //   .quantity
-      //   ? user.cart[exitingItemIndex].quantity + 1
-      //   : quantity; //update khi thay đổi số lượng trong giỏ hàng
       user.cart[exitingItemIndex].price = product.price;
       message = `Đã tăng số lượng sản phẩm trong giỏ hàng`;
     } else {
@@ -241,7 +237,7 @@ export const deleteCartItem = async (req, res) => {
           cart: { productId: productId },
         },
       },
-      { new: true }
+      { new: true },
     ).select("cart");
 
     if (!updatedUser) {
