@@ -21,7 +21,15 @@ export const createUser = async (req, res) => {
         return res.status(409).json({ message: "Da co admin roi!!!!" }); //409: Loi xung dot khong the tao moi
       }
     }
-    const user = new User({ name, email, phone, address, password, role });
+    const user = new User({
+      username,
+      name,
+      email,
+      phone,
+      address,
+      password,
+      role,
+    });
     const newUser = await user.save();
 
     res.status(201).json(newUser); //201: create thanh cong
