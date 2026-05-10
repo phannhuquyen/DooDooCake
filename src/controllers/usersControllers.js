@@ -8,19 +8,38 @@ export const getAllUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (error) {
     console.error("Loi kho call getAllUsers", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    res.status(500).json({ message: "Lỗi hệ thống !!!" });
   }
 };
 
 export const createUser = async (req, res) => {
   try {
     const { username, name, email, phone, address, password, role } = req.body;
+
+    // check username
+    const hasUsername = await User.findOne({
+      username,
+    });
+
+    if (hasUsername) {
+      return res.status(409).json({
+        message: "Tên đăng nhập đã tồn tại",
+      });
+    }
+
+    // check admin
     if (role === "admin") {
-      const hasAdmin = await User.findOne({ role: "admin" });
+      const hasAdmin = await User.findOne({
+        role: "admin",
+      });
+
       if (hasAdmin) {
-        return res.status(409).json({ message: "Da co admin roi!!!!" }); //409: Loi xung dot khong the tao moi
+        return res.status(409).json({
+          message: "Đã có admin rồi",
+        });
       }
     }
+
     const user = new User({
       username,
       name,
@@ -30,32 +49,77 @@ export const createUser = async (req, res) => {
       password,
       role,
     });
+
     const newUser = await user.save();
 
-    res.status(201).json(newUser); //201: create thanh cong
+    res.status(201).json(newUser);
   } catch (error) {
-    console.error("Loi kho call createUser", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    console.error("Lỗi khi call createUser", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
   }
 };
 
-export const updateUser = async (req, res) => {
+export const updateUser = async (
+  req,
+  res
+) => {
   try {
-    const { name, email, phone, password, role, address } = req.body;
-    const updateUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { name, email, phone, password, role, address },
-      { new: true },
-    );
+    const {
+      name,
+      email,
+      phone,
+      password,
+      role,
+      address,
+    } = req.body;
 
-    if (!updateUser) {
-      return res.status(404).json({ message: "User khong ton tai" });
+    const currentUser =
+      await User.findById(req.params.id);
+
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "User không tồn tại",
+      });
     }
+
+    // check password cũ
+    if (
+      password &&
+      password === currentUser.password
+    ) {
+      return res.status(409).json({
+        message:
+          "Mật khẩu mới không được trùng mật khẩu cũ",
+      });
+    }
+
+    const updateUser =
+      await User.findByIdAndUpdate(
+        req.params.id,
+        {
+          name,
+          email,
+          phone,
+          password,
+          role,
+          address,
+        },
+        { new: true }
+      );
 
     res.status(200).json(updateUser);
   } catch (error) {
-    console.error("Loi kho call updateUser", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    console.error(
+      "Lỗi khi call updateUser",
+      error
+    );
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
   }
 };
 
@@ -70,7 +134,7 @@ export const deleteUser = async (req, res) => {
     res.status(200).json(deleteUser);
   } catch (error) {
     console.error("Loi kho call deleteUser", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
 
@@ -182,7 +246,7 @@ export const getCartByUser = async (req, res) => {
       select: "name images price",
     });
     if (!user) {
-      return res.status(404).json({ message: "User khong ton tai!!!" });
+      return res.status(404).json({ message: "Người dùng không tồn tại!!!" });
     }
     return res.status(200).json(user.cart);
   } catch (err) {
@@ -198,12 +262,12 @@ export const createCartItem = async (req, res) => {
     const { productId, quantity } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User không tồn tại" });
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({ message: "Product không tồn tại" });
+      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
 
     const exitingItemIndex = user.cart.findIndex(
@@ -249,7 +313,7 @@ export const deleteCartItem = async (req, res) => {
     ).select("cart");
 
     if (!updatedUser) {
-      return res.status(404).json({ message: "User không tồn tại." });
+      return res.status(404).json({ message: "Người dùng không tồn tại." });
     }
 
     return res.status(200).json({
