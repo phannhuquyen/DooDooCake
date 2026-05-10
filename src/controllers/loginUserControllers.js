@@ -4,9 +4,9 @@ import jwt from "jsonwebtoken";
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
     if (!user) {
       return res.status(400).json({ message: "User khong ton tai!" });
     }
@@ -27,9 +27,9 @@ export const loginUser = async (req, res) => {
       token,
       user: {
         id: user._id,
+        username: user.username,
         name: user.name,
         role: user.role,
-        email: user.email,
       },
     });
   } catch (e) {
