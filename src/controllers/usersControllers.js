@@ -71,7 +71,7 @@ export const updateUser = async (
       name,
       email,
       phone,
-      password,
+      // password,
       role,
       address,
     } = req.body;
@@ -86,15 +86,15 @@ export const updateUser = async (
     }
 
     // check password cũ
-    if (
-      password &&
-      password === currentUser.password
-    ) {
-      return res.status(409).json({
-        message:
-          "Mật khẩu mới không được trùng mật khẩu cũ",
-      });
-    }
+    // if (
+    //   password &&
+    //   password === currentUser.password
+    // ) {
+    //   return res.status(409).json({
+    //     message:
+    //       "Mật khẩu mới không được trùng mật khẩu cũ",
+    //   });
+    // }
 
     const updateUser =
       await User.findByIdAndUpdate(
@@ -103,7 +103,7 @@ export const updateUser = async (
           name,
           email,
           phone,
-          password,
+          // password,
           role,
           address,
         },
@@ -122,6 +122,64 @@ export const updateUser = async (
     });
   }
 };
+
+export const updateUserPassword =
+  async (req, res) => {
+    try {
+      const { oldPassword, newPassword } =
+        req.body;
+
+      const currentUser =
+        await User.findById(req.params.id);
+
+      if (!currentUser) {
+        return res.status(404).json({
+          message: "Người dùng không tồn tại",
+        });
+      }
+
+      // check mật khẩu cũ
+      if (
+        oldPassword !==
+        currentUser.password
+      ) {
+        return res.status(409).json({
+          message:
+            "Mật khẩu cũ không chính xác",
+        });
+      }
+
+      // check trùng password cũ
+      if (
+        newPassword ===
+        currentUser.password
+      ) {
+        return res.status(409).json({
+          message:
+            "Mật khẩu mới không được trùng mật khẩu cũ",
+        });
+      }
+
+      currentUser.password =
+        newPassword;
+
+      await currentUser.save();
+
+      res.status(200).json({
+        message:
+          "Đổi mật khẩu thành công",
+      });
+    } catch (error) {
+      console.error(
+        "Lỗi update password",
+        error
+      );
+
+      res.status(500).json({
+        message: "Lỗi hệ thống",
+      });
+    }
+  };
 
 export const deleteUser = async (req, res) => {
   try {

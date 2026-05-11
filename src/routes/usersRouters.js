@@ -10,6 +10,7 @@ import {
   getCartByUser,
   createCartItem,
   deleteCartItem,
+  updateUserPassword,
 } from "../controllers/usersControllers.js";
 
 const router = express.Router();
@@ -19,6 +20,8 @@ router.get("/", getAllUsers);
 router.post("/", createUser);
 
 router.put("/:id", updateUser);
+
+router.put("/:id/password", updateUserPassword);
 
 router.delete("/:id", deleteUser);
 
