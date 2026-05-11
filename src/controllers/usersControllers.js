@@ -62,10 +62,7 @@ export const createUser = async (req, res) => {
   }
 };
 
-export const updateUser = async (
-  req,
-  res
-) => {
+export const updateUser = async (req, res) => {
   try {
     const {
       name,
@@ -76,8 +73,7 @@ export const updateUser = async (
       address,
     } = req.body;
 
-    const currentUser =
-      await User.findById(req.params.id);
+    const currentUser = await User.findById(req.params.id);
 
     if (!currentUser) {
       return res.status(404).json({
@@ -96,26 +92,22 @@ export const updateUser = async (
     //   });
     // }
 
-    const updateUser =
-      await User.findByIdAndUpdate(
-        req.params.id,
-        {
-          name,
-          email,
-          phone,
-          // password,
-          role,
-          address,
-        },
-        { new: true }
-      );
+    const updateUser = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        email,
+        phone,
+        // password,
+        role,
+        address,
+      },
+      { new: true },
+    );
 
     res.status(200).json(updateUser);
   } catch (error) {
-    console.error(
-      "Lỗi khi call updateUser",
-      error
-    );
+    console.error("Lỗi khi call updateUser", error);
 
     res.status(500).json({
       message: "Lỗi hệ thống",
@@ -123,63 +115,47 @@ export const updateUser = async (
   }
 };
 
-export const updateUserPassword =
-  async (req, res) => {
-    try {
-      const { oldPassword, newPassword } =
-        req.body;
+export const updateUserPassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
 
-      const currentUser =
-        await User.findById(req.params.id);
+    const currentUser = await User.findById(req.params.id);
 
-      if (!currentUser) {
-        return res.status(404).json({
-          message: "Người dùng không tồn tại",
-        });
-      }
-
-      // check mật khẩu cũ
-      if (
-        oldPassword !==
-        currentUser.password
-      ) {
-        return res.status(409).json({
-          message:
-            "Mật khẩu cũ không chính xác",
-        });
-      }
-
-      // check trùng password cũ
-      if (
-        newPassword ===
-        currentUser.password
-      ) {
-        return res.status(409).json({
-          message:
-            "Mật khẩu mới không được trùng mật khẩu cũ",
-        });
-      }
-
-      currentUser.password =
-        newPassword;
-
-      await currentUser.save();
-
-      res.status(200).json({
-        message:
-          "Đổi mật khẩu thành công",
-      });
-    } catch (error) {
-      console.error(
-        "Lỗi update password",
-        error
-      );
-
-      res.status(500).json({
-        message: "Lỗi hệ thống",
+    if (!currentUser) {
+      return res.status(404).json({
+        message: "Người dùng không tồn tại",
       });
     }
-  };
+
+    // check mật khẩu cũ
+    if (oldPassword !== currentUser.password) {
+      return res.status(409).json({
+        message: "Mật khẩu cũ không chính xác",
+      });
+    }
+
+    // check trùng password cũ
+    if (newPassword === currentUser.password) {
+      return res.status(409).json({
+        message: "Mật khẩu mới không được trùng mật khẩu cũ",
+      });
+    }
+
+    currentUser.password = newPassword;
+
+    await currentUser.save();
+
+    res.status(200).json({
+      message: "Đổi mật khẩu thành công",
+    });
+  } catch (error) {
+    console.error("Lỗi update password", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
+  }
+};
 
 export const deleteUser = async (req, res) => {
   try {
@@ -295,63 +271,75 @@ export const getWishlist = async (req, res) => {
   }
 };
 
-//lấy giỏ hàng by userid
-export const getCartByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).select("cart").populate({
-      path: "cart.productId",
-      select: "name images price",
-    });
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại!!!" });
-    }
-    return res.status(200).json(user.cart);
-  } catch (err) {
-    console.error("Lỗi getCart By IdUser", err);
-    return res.status(500).json({ message: "Lỗi hệ thống." });
-  }
-};
+//lấy giỏ hàng by useridexport const getCartByUser = async (req, res) => {
+try {
+  const { userId } = req.params;
+  const user = await User.findById(userId).populate({
+    path: "cart.productId",
+    select: "name images",
+  });
+
+  if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
+
+  // Trả về danh sách phẳng theo yêu cầu của bạn
+  const cartItems = user.cart
+    .map((item) => {
+      if (!item.productId) return null;
+      return {
+        _id: item._id, // ID của dòng trong giỏ hàng
+        productId: item.productId._id,
+        name: item.productId.name,
+        image: item.productId.images?.[0] || "", // Lấy ảnh đầu tiên
+        quantity: item.quantity,
+        price: item.price, // Giá đơn lẻ
+        totalPrice: item.price * item.quantity, // Tổng tiền món này
+        selected: item.selected,
+      };
+    })
+    .filter(Boolean);
+
+  return res.status(200).json(cartItems);
+} catch (err) {
+  return res.status(500).json({ message: "Lỗi hệ thống" });
+}
 
 //thêm bớt quantity vao giỏ hàng
 export const createCartItem = async (req, res) => {
   try {
     const { userId } = req.params;
     const { productId, quantity } = req.body;
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Người dùng không tồn tại" });
-    }
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
-    }
+    const [user, product] = await Promise.all([
+      User.findById(userId),
+      Product.findById(productId),
+    ]);
 
-    const exitingItemIndex = user.cart.findIndex(
+    if (!user || !product)
+      return res.status(404).json({ message: "Dữ liệu không hợp lệ" });
+
+    const existingIndex = user.cart.findIndex(
       (item) => item.productId.toString() === productId,
     );
-    let message = "";
-    if (exitingItemIndex > -1) {
-      user.cart[exitingItemIndex].quantity = Math.max(1, quantity);
-      user.cart[exitingItemIndex].price = product.price;
-      message = `Đã tăng số lượng sản phẩm trong giỏ hàng`;
+
+    if (existingIndex > -1) {
+      // Nếu đã có, cộng dồn số lượng và cập nhật giá mới nhất
+      user.cart[existingIndex].quantity += Number(quantity) || 1;
+      user.cart[existingIndex].price = product.price;
     } else {
+      // Nếu chưa có, thêm mới
       user.cart.push({
-        productId: productId,
-        quantity: 1,
+        productId,
+        quantity: Number(quantity) || 1,
         price: product.price,
+        selected: false,
       });
-      message = "Đã thểm sản phẩm vào giỏ hàng";
     }
+
     await user.save();
-    return res.status(200).json({
-      message: message,
-      cart: user.cart,
-    });
+    // Sau khi lưu, gọi lại hàm lấy giỏ hàng hoặc trả về thông báo thành công
+    return res.status(200).json({ message: "Cập nhật giỏ hàng thành công" });
   } catch (err) {
-    console.error("Lỗi thêm sản phẩm vào giỏ hàng", err);
-    return res.status(500).json({ message: "Lỗi hệ thống." });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
 
@@ -362,24 +350,14 @@ export const deleteCartItem = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      {
-        $pull: {
-          cart: { productId: productId },
-        },
-      },
+      { $pull: { cart: { productId: productId } } },
       { new: true },
-    ).select("cart");
+    );
 
-    if (!updatedUser) {
-      return res.status(404).json({ message: "Người dùng không tồn tại." });
-    }
-
-    return res.status(200).json({
-      message: "Sản phẩm đã được xóa khỏi giỏ hàng.",
-      cart: updatedUser.cart,
-    });
+    return res
+      .status(200)
+      .json({ message: "Đã xóa sản phẩm", cart: updatedUser.cart });
   } catch (err) {
-    console.error("Lỗi thêm sản phẩm vào giỏ hàng", err);
-    return res.status(500).json({ message: "Lỗi hệ thống." });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };

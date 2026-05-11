@@ -56,11 +56,12 @@ const userSchema = new mongoose.Schema(
       {
         productId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: Product,
+          ref: "Product", // Đảm bảo đúng tên Model Product của bạn
           required: true,
         },
-        quantity: { type: Number, default: 1 },
+        quantity: { type: Number, default: 1, min: 1 },
         price: { type: Number, default: 0 },
+        selected: { type: Boolean, default: false }, // Thêm mặc định là false
       },
     ],
     orderList: [
@@ -72,7 +73,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 userSchema.pre("save", function (next) {
