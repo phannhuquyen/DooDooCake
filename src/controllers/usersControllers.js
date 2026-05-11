@@ -271,37 +271,39 @@ export const getWishlist = async (req, res) => {
   }
 };
 
-//lấy giỏ hàng by useridexport const getCartByUser = async (req, res) => {
-try {
-  const { userId } = req.params;
-  const user = await User.findById(userId).populate({
-    path: "cart.productId",
-    select: "name images",
-  });
+//lấy giỏ hàng by userid
+export const getCartByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate({
+      path: "cart.productId",
+      select: "name images",
+    });
 
-  if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
+    if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
 
-  // Trả về danh sách phẳng theo yêu cầu của bạn
-  const cartItems = user.cart
-    .map((item) => {
-      if (!item.productId) return null;
-      return {
-        _id: item._id, // ID của dòng trong giỏ hàng
-        productId: item.productId._id,
-        name: item.productId.name,
-        image: item.productId.images?.[0] || "", // Lấy ảnh đầu tiên
-        quantity: item.quantity,
-        price: item.price, // Giá đơn lẻ
-        totalPrice: item.price * item.quantity, // Tổng tiền món này
-        selected: item.selected,
-      };
-    })
-    .filter(Boolean);
+    // Trả về danh sách phẳng theo yêu cầu của bạn
+    const cartItems = user.cart
+      .map((item) => {
+        if (!item.productId) return null;
+        return {
+          _id: item._id, // ID của dòng trong giỏ hàng
+          productId: item.productId._id,
+          name: item.productId.name,
+          image: item.productId.images?.[0] || "", // Lấy ảnh đầu tiên
+          quantity: item.quantity,
+          price: item.price, // Giá đơn lẻ
+          totalPrice: item.price * item.quantity, // Tổng tiền món này
+          selected: item.selected,
+        };
+      })
+      .filter(Boolean);
 
-  return res.status(200).json(cartItems);
-} catch (err) {
-  return res.status(500).json({ message: "Lỗi hệ thống" });
-}
+    return res.status(200).json(cartItems);
+  } catch (err) {
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+};
 
 //thêm bớt quantity vao giỏ hàng
 export const createCartItem = async (req, res) => {
