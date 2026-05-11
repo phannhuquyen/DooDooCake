@@ -29,9 +29,9 @@ const productSchema = new mongoose.Schema(
       default: "",
     },
     details: {
-      thanhPhan: { type: String, default: "" }, // Thành phần
-      kichThuoc: { type: String, default: "" }, // Kích thước / trọng lượng
-      baoQuan: { type: String, default: "" }, // Cách bảo quản
+      thanhphan: { type: String, default: "" }, // Thành phần
+      kichthuoc: { type: String, default: "" }, // Kích thước / trọng lượng
+      baoquan: { type: String, default: "" }, // Cách bảo quản
     },
     status: {
       type: String,
