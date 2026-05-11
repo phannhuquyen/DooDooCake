@@ -22,6 +22,7 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema(
   {
+    _id: { type: String }, // Khai báo _id là String thay vì ObjectId
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
