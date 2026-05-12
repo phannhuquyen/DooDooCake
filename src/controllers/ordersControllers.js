@@ -183,3 +183,30 @@ export const getOrdersByUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
+
+// lấy chi tiết đơn hàng theo id
+export const getOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findById(id).populate(
+      "userId",
+      "name email",
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Đơn hàng không tồn tại",
+      });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    console.error("Lỗi getOrderById", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
+  }
+};

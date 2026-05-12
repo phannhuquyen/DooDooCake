@@ -4,6 +4,7 @@ import {
   createOrder,
   getOrdersByUser,
   updateOrder,
+  getOrderById,
 } from "../controllers/ordersControllers.js";
 
 const router = express.Router();
@@ -20,5 +21,7 @@ router.get("/", getAllOrders);
 //cap nhat don hang
 router.put("/:id", updateOrder);
 
+//lấy đơn hàng bởi id
+router.get("/:id",getOrderById)
 
 export default router;
