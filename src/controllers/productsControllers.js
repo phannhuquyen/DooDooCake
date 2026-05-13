@@ -142,23 +142,25 @@ export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // kiểm tra product tồn tại
+    // kiểm tra product có tồn tại không
     const product = await Product.findById(id);
 
     if (!product) {
-      return res.status(404).json({
-        message: "Sản phẩm không tồn tại",
-      });
+      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
     }
 
-    // kiểm tra sản phẩm có trong order không
+    // kiểm tra sản phẩm có trong đơn chưa hoàn thành không
     const existedOrder = await Order.findOne({
       "items.productId": id,
+      status: {
+        $in: ["pending", "confirmed", "shipping", "cancelled"],
+      },
     });
 
     if (existedOrder) {
       return res.status(400).json({
-        message: "Không thể xóa vì sản phẩm đã tồn tại trong đơn hàng",
+        message:
+          "Không thể xóa sản phẩm vì đang tồn tại trong đơn hàng chưa hoàn thành",
       });
     }
 
@@ -168,14 +170,13 @@ export const deleteProduct = async (req, res) => {
       message: "Xóa sản phẩm thành công",
     });
   } catch (error) {
-    console.error("Lỗi deleteProduct", error);
+    console.error("Lỗi deleteProduct:", error);
 
     res.status(500).json({
       message: "Lỗi hệ thống",
     });
   }
 };
-
 
 export const getProductById = async (req, res) => {
   try {
