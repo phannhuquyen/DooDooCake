@@ -137,20 +137,45 @@ export const updateProduct = async (req, res) => {
   }
 };
 
+// delete product
 export const deleteProduct = async (req, res) => {
   try {
-    const deleteProduct = await Product.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
 
-    if (!deleteProduct) {
-      return res.status(404).json({ message: "Khong ton tai Product" });
+    // kiểm tra product tồn tại
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Sản phẩm không tồn tại",
+      });
     }
 
-    res.status(200).json(deleteProduct);
+    // kiểm tra sản phẩm có trong order không
+    const existedOrder = await Order.findOne({
+      "items.productId": id,
+    });
+
+    if (existedOrder) {
+      return res.status(400).json({
+        message: "Không thể xóa vì sản phẩm đã tồn tại trong đơn hàng",
+      });
+    }
+
+    await Product.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: "Xóa sản phẩm thành công",
+    });
   } catch (error) {
-    console.error("Loi kho call deleteProduct", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    console.error("Lỗi deleteProduct", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
   }
 };
+
 
 export const getProductById = async (req, res) => {
   try {
