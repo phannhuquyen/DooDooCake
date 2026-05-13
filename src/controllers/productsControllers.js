@@ -153,7 +153,7 @@ export const deleteProduct = async (req, res) => {
     const existedOrder = await Order.findOne({
       "items.productId": id,
       status: {
-        $in: ["pending", "confirmed", "shipping", "cancelled"],
+        $in: ["completed"],
       },
     });
 
