@@ -140,6 +140,7 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
   try {
+    const { id } = req.params.id;
     const product = await Product.findById(id);
 
     if (!product) {
@@ -159,7 +160,7 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    const deleteProduct = await Product.findByIdAndDelete(req.params.id);
+    const deleteProduct = await Product.findByIdAndDelete(id);
 
     if (!deleteProduct) {
       return res.status(404).json({ message: "Khong ton tai Product" });
