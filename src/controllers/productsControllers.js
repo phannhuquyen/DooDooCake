@@ -140,7 +140,7 @@ export const updateProduct = async (req, res) => {
 
 export const deleteProduct = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params.id;
 
     // kiểm tra product có tồn tại không
     const product = await Product.findById(id);
