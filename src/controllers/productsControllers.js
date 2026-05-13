@@ -1,3 +1,4 @@
+import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 
 export const getAllProducts = async (req, res) => {
@@ -137,44 +138,37 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// delete product
 export const deleteProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    // kiểm tra product có tồn tại không
     const product = await Product.findById(id);
 
     if (!product) {
-      return res.status(404).json({ message: "Sản phẩm không tồn tại" });
+      return res.status(404).json({
+        message: "Sản phẩm không tồn tại",
+      });
     }
 
-    // kiểm tra sản phẩm có trong đơn chưa hoàn thành không
+    // kiểm tra sản phẩm có trong order không
     const existedOrder = await Order.findOne({
       "items.productId": id,
-      status: {
-        $in: ["completed"],
-      },
     });
 
     if (existedOrder) {
       return res.status(400).json({
-        message:
-          "Không thể xóa sản phẩm vì đang tồn tại trong đơn hàng chưa hoàn thành",
+        message: "Không thể xóa vì sản phẩm đã tồn tại trong đơn hàng",
       });
     }
 
-    await Product.findByIdAndDelete(id);
+    const deleteProduct = await Product.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({
-      message: "Xóa sản phẩm thành công",
-    });
+    if (!deleteProduct) {
+      return res.status(404).json({ message: "Khong ton tai Product" });
+    }
+
+    res.status(200).json(deleteProduct);
   } catch (error) {
-    console.error("Lỗi deleteProduct:", error);
-
-    res.status(500).json({
-      message: "Lỗi hệ thống",
-    });
+    console.error("Loi kho call deleteProduct", error);
+    res.status(500).json({ message: "Loi he thong !!!" });
   }
 };
 
