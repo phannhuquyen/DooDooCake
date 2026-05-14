@@ -15,21 +15,48 @@ export const getAllCategories = async (req, res) => {
 export const createCategory = async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name) {
-      return res
-        .status(409)
-        .json({ message: "Bạn chưa nhập tên danh mục mới!!" });
+
+    if (!name?.trim()) {
+      return res.status(409).json({
+        message:
+          "Bạn chưa nhập tên danh mục mới!!",
+      });
     }
-    if (name === (await Category.findOne({ name: name }))) {
-      return res.status(409).json({ message: `Da co danh muc ${name} roi!!!` });
+
+    // check trùng tên
+    const existedCategory =
+      await Category.findOne({
+        name: {
+          $regex: `^${name.trim()}$`,
+          $options: "i",
+        },
+      });
+
+    if (existedCategory) {
+      return res.status(409).json({
+        message: `Đã có danh mục ${name} rồi!!!`,
+      });
     }
-    const category = new Category({ name });
-    const newCategory = await category.save();
+
+    const category = new Category({
+      name: name.trim(),
+    });
+
+    const newCategory =
+      await category.save();
 
     res.status(201).json(newCategory);
-  } catch (e) {
-    console.error("Loi khi call create category", e);
-    res.status(500).json({ message: "Loi he thongg!!!" });
+  } catch (error) {
+    console.error(
+      "Loi khi call create category",
+      error,
+    );
+
+    res.status(500).json({
+      message:
+        error.message ||
+        "Lỗi hệ thống!!!",
+    });
   }
 };
 
