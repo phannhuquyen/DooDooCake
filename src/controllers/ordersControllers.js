@@ -5,9 +5,6 @@ import Product from "../models/Product.js";
 export const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 }); // lấy hết
-    // .populate("user", "name email")
-    // .populate("items.product", "name price");
-
     res.status(200).json(orders);
   } catch (error) {
     console.error("Lỗi getAllOrders", error);
@@ -15,61 +12,6 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// //tạo đơn hàng
-// export const createOrder = async (req, res) => {
-//   try {
-//     const {
-//       userId,
-//       name,
-//       email,
-//       phone,
-//       address,
-//       items,
-//       totalPrice,
-//       fee,
-//       promotion,
-//       paymentMethod,
-//     } = req.body;
-
-//     const enrichedItems = await Promise.all(
-//       items.map(async (item) => {
-//         const productDetail = await Product.findById(item.productId);
-
-//         if (!productDetail) {
-//           throw new Error(`Sản phẩm với ID ${item.productId} không tồn tại.`);
-//         }
-
-//         // ✅ Gán giá trị name và price lấy từ database
-//         return {
-//           productId: item.productId,
-//           name: productDetail.name,
-//           price: productDetail.price,
-//           quantity: item.quantity,
-//           images: productDetail.images,
-//         };
-//       }),
-//     );
-
-//     const order = new Order({
-//       userId,
-//       name,
-//       email,
-//       phone,
-//       address,
-//       items: enrichedItems, // {productId, quantity, price}
-//       totalPrice,
-//       fee,
-//       promotion,
-//       paymentMethod,
-//     });
-
-//     const newOrder = await order.save();
-//     res.status(201).json(newOrder);
-//   } catch (error) {
-//     console.error("Lỗi create order", error);
-//     res.status(500).json({ message: "Lỗi hệ thống" });
-//   }
-// };
 // Hàm sinh mã đơn hàng
 const generateOrderCode = () => {
   const date = new Date();
@@ -80,67 +22,75 @@ const generateOrderCode = () => {
 
 export const createOrder = async (req, res) => {
   try {
-    const { userId, items, totalPrice, ...otherData } = req.body;
+    const {
+      userId,
+      name,
+      email,
+      phone,
+      address,
+      items,
+      totalPrice,
+      fee,
+      promotion,
+      paymentMethod,
+    } = req.body;
 
-    // 1. Chuẩn bị dữ liệu sản phẩm (Giữ nguyên logic của bạn)
-    const enrichedItems = await Promise.all(
-      items.map(async (item) => {
-        const productDetail = await Product.findById(item.productId);
-        if (!productDetail)
-          throw new Error(`Sản phẩm ${item.productId} không tồn tại.`);
-        return {
-          productId: item.productId,
-          name: productDetail.name,
-          price: productDetail.price,
-          quantity: item.quantity,
-          images: productDetail.images,
-        };
-      }),
-    );
+    // =========================
+    // check stock
+    // =========================
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
 
-    // 2. Vòng lặp xử lý trùng mã đơn hàng
-    let newOrder;
-    let isSaved = false;
-    let retryCount = 0;
-    const maxRetries = 5; // Giới hạn thử lại để tránh vòng lặp vô tận nếu có lỗi hệ thống
-
-    while (!isSaved && retryCount < maxRetries) {
-      try {
-        const orderId = generateOrderCode();
-
-        const order = new Order({
-          _id: orderId, // Gán mã vừa tạo vào _id
-          userId,
-          items: enrichedItems,
-          totalPrice,
-          ...otherData,
+      if (!product) {
+        return res.status(404).json({
+          message: `Không tìm thấy sản phẩm ${item.name}`,
         });
+      }
 
-        newOrder = await order.save();
-        isSaved = true; // Lưu thành công, thoát vòng lặp
-      } catch (error) {
-        // Kiểm tra nếu là lỗi trùng ID (code 11000)
-        if (error.code === 11000) {
-          retryCount++;
-          console.warn(`Trùng mã đơn hàng, đang thử lại lần ${retryCount}...`);
-        } else {
-          throw error; // Nếu là lỗi khác thì ném ra cho catch cha xử lý
-        }
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          message: `Sản phẩm ${item.name} không đủ số lượng`,
+        });
       }
     }
 
-    if (!isSaved) {
-      return res
-        .status(500)
-        .json({
-          message: "Không thể tạo mã đơn hàng duy nhất, vui lòng thử lại.",
-        });
+    // =========================
+    // update stock + sold
+    // =========================
+    for (const item of items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: {
+          stock: -item.quantity,
+          sold: item.quantity,
+        },
+      });
     }
+
+    // =========================
+    // create order
+    // =========================
+    const order = new Order({
+      userId,
+      name,
+      email,
+      phone,
+      address,
+      items,
+      totalPrice,
+      fee,
+      promotion,
+      paymentMethod,
+    });
+
+    const newOrder = await order.save();
 
     res.status(201).json(newOrder);
   } catch (error) {
-    console.error("Lỗi create order:", error);
-    res.status(500).json({ message: error.message || "Lỗi hệ thống" });
+    console.error("Lỗi createOrder:", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
   }
 };
 
@@ -184,16 +134,12 @@ export const getOrdersByUser = async (req, res) => {
   }
 };
 
-
 // lấy chi tiết đơn hàng theo id
 export const getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const order = await Order.findById(id).populate(
-      "userId",
-      "name email",
-    );
+    const order = await Order.findById(id).populate("userId", "name email");
 
     if (!order) {
       return res.status(404).json({
@@ -204,6 +150,59 @@ export const getOrderById = async (req, res) => {
     res.status(200).json(order);
   } catch (error) {
     console.error("Lỗi getOrderById", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
+  }
+};
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findById(id);
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Đơn hàng không tồn tại",
+      });
+    }
+
+    if (order.status === "cancelled") {
+      return res.status(400).json({
+        message: "Đơn hàng đã bị hủy",
+      });
+    }
+
+    if (order.status === "completed") {
+      return res.status(400).json({
+        message: "Không thể hủy đơn đã hoàn thành",
+      });
+    }
+
+    // =========================
+    // trả stock
+    // giảm sold
+    // =========================
+    for (const item of order.items) {
+      await Product.findByIdAndUpdate(item.productId, {
+        $inc: {
+          stock: item.quantity,
+          sold: -item.quantity,
+        },
+      });
+    }
+
+    order.status = "cancelled";
+
+    await order.save();
+
+    res.status(200).json({
+      message: "Hủy đơn hàng thành công",
+    });
+  } catch (error) {
+    console.error("Lỗi cancelOrder:", error);
 
     res.status(500).json({
       message: "Lỗi hệ thống",

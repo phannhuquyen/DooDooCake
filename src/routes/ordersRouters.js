@@ -5,6 +5,7 @@ import {
   getOrdersByUser,
   updateOrder,
   getOrderById,
+  cancelOrder,
 } from "../controllers/ordersControllers.js";
 
 const router = express.Router();
@@ -22,6 +23,9 @@ router.get("/", getAllOrders);
 router.put("/:id", updateOrder);
 
 //lấy đơn hàng bởi id
-router.get("/:id",getOrderById)
+router.get("/:id", getOrderById);
+
+//cancel đơn hàng
+router.get("/:id/cancel", cancelOrder);
 
 export default router;
