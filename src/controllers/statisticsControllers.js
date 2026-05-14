@@ -1,4 +1,5 @@
 import Order from "../models/Order.js";
+import User from "../models/User.js";
 
 // ==========================
 // THEO NGÀY
@@ -72,7 +73,7 @@ export const getRevenueByDay = async (req, res) => {
     console.error("Lỗi getRevenueByDay:", error);
 
     res.status(500).json({
-      message: "Lỗi hệ thống",
+      message: error.message || "Lỗi hệ thống",
     });
   }
 };
@@ -144,26 +145,31 @@ export const getRevenueByMonth = async (req, res) => {
     console.error("Lỗi getRevenueByMonth:", error);
 
     res.status(500).json({
-      message: "Lỗi hệ thống",
+      message: error.message || "Lỗi hệ thống",
     });
   }
 };
 
+// ==========================
+// DASHBOARD
+// ==========================
 export const getDashboardStats = async (req, res) => {
   try {
-    // ===== hôm nay =====
+    console.log("API dashboard called");
+
+    // hôm nay
     const today = new Date();
 
     today.setHours(0, 0, 0, 0);
 
-    // ===== hôm qua =====
+    // hôm qua
     const yesterday = new Date(today);
 
     yesterday.setDate(yesterday.getDate() - 1);
 
-    // ===================================
+    // =====================
     // DOANH THU
-    // ===================================
+    // =====================
 
     const todayRevenue = await Order.aggregate([
       {
@@ -215,9 +221,9 @@ export const getDashboardStats = async (req, res) => {
       },
     ]);
 
-    // ===================================
+    // =====================
     // ĐƠN HÀNG
-    // ===================================
+    // =====================
 
     const todayOrders = await Order.countDocuments({
       status: {
@@ -241,9 +247,9 @@ export const getDashboardStats = async (req, res) => {
       },
     });
 
-    // ===================================
+    // =====================
     // USER MỚI
-    // ===================================
+    // =====================
 
     const todayUsers = await User.countDocuments({
       createdAt: {
@@ -259,17 +265,17 @@ export const getDashboardStats = async (req, res) => {
       },
     });
 
-    // ===================================
+    // =====================
     // VALUE
-    // ===================================
+    // =====================
 
     const revenueToday = todayRevenue[0]?.total || 0;
 
     const revenueYesterday = yesterdayRevenue[0]?.total || 0;
 
-    // ===================================
+    // =====================
     // PERCENT
-    // ===================================
+    // =====================
 
     const calcPercent = (todayValue, yesterdayValue) => {
       if (yesterdayValue === 0) {
@@ -304,7 +310,7 @@ export const getDashboardStats = async (req, res) => {
     console.error("Lỗi getDashboardStats:", error);
 
     res.status(500).json({
-      message: "Lỗi hệ thống",
+      message: error.message || "Lỗi hệ thống",
     });
   }
 };
