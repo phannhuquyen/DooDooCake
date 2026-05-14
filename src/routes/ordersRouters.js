@@ -26,6 +26,6 @@ router.put("/:id", updateOrder);
 router.get("/:id", getOrderById);
 
 //cancel đơn hàng
-router.get("/:id/cancel", cancelOrder);
+router.patch("/:id/cancel", cancelOrder);
 
 export default router;
