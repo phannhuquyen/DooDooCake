@@ -26,6 +26,20 @@ export const createProduct = async (req, res) => {
       images,
     } = req.body;
 
+    // check tên sản phẩm
+    const existedProduct = await Product.findOne({
+      name: {
+        $regex: `^${name.trim()}$`,
+        $options: "i",
+      },
+    });
+
+    if (existedProduct) {
+      return res.status(400).json({
+        message: "Tên sản phẩm đã tồn tại",
+      });
+    }
+
     const product = new Product({
       categoryId,
       name,
@@ -37,6 +51,7 @@ export const createProduct = async (req, res) => {
       status,
       images,
     });
+
     const newProduct = await product.save();
 
     res.status(201).json(newProduct); //201: create thanh cong
