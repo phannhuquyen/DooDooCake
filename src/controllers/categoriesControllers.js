@@ -39,7 +39,7 @@ export const updateCategory = async (req, res) => {
     const updateCategory = await Category.findByIdAndUpdate(
       req.params.id,
       { name },
-      { new: true }
+      { new: true },
     );
     if (!updateCategory) {
       return res.status(404).json({ message: "Category khong ton tai!!!" });
@@ -67,33 +67,70 @@ export const updateCategory = async (req, res) => {
 //   }
 // };
 
-
-
 // Xóa danh mục và tất cả sản phẩm thuộc danh mục đó
+// export const deleteCategory = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // 1. Kiểm tra danh mục có tồn tại không
+//     const category = await Category.findById(id);
+//     if (!category) {
+//       return res.status(404).json({ message: "Danh mục không tồn tại" });
+//     }
+
+//     // 2. Xóa tất cả sản phẩm có categoryId trùng với id danh mục này
+//     // Giả sử trong model Product bạn lưu trường categoryId hoặc category (id)
+//     const deletedProducts = await Product.deleteMany({ category: id });
+
+//     // 3. Xóa danh mục chính
+//     await Category.findByIdAndDelete(id);
+
+//     res.status(200).json({
+//       message: "Xóa danh mục và các sản phẩm liên quan thành công",
+//       deletedProductsCount: deletedProducts.deletedCount,
+//     });
+//   } catch (error) {
+//     console.error("Lỗi khi xóa danh mục:", error);
+//     res.status(500).json({ message: "Lỗi hệ thống khi xóa danh mục" });
+//   }
+// };
+// còn sản phẩm thì không được xóa
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. Kiểm tra danh mục có tồn tại không
+    // 1. kiểm tra danh mục tồn tại
     const category = await Category.findById(id);
+
     if (!category) {
-      return res.status(404).json({ message: "Danh mục không tồn tại" });
+      return res.status(404).json({
+        message: "Danh mục không tồn tại",
+      });
     }
 
-    // 2. Xóa tất cả sản phẩm có categoryId trùng với id danh mục này
-    // Giả sử trong model Product bạn lưu trường categoryId hoặc category (id)
-    const deletedProducts = await Product.deleteMany({ category: id });
+    // 2. kiểm tra còn sản phẩm không
+    const existedProduct = await Product.findOne({
+      categoryId: id,
+    });
 
-    // 3. Xóa danh mục chính
+    if (existedProduct) {
+      return res.status(400).json({
+        message: "Không thể xóa vì danh mục vẫn còn sản phẩm",
+      });
+    }
+
+    // 3. xóa danh mục
     await Category.findByIdAndDelete(id);
 
     res.status(200).json({
-      message: "Xóa danh mục và các sản phẩm liên quan thành công",
-      deletedProductsCount: deletedProducts.deletedCount,
+      message: "Xóa danh mục thành công",
     });
   } catch (error) {
-    console.error("Lỗi khi xóa danh mục:", error);
-    res.status(500).json({ message: "Lỗi hệ thống khi xóa danh mục" });
+    console.error("Lỗi deleteCategory:", error);
+
+    res.status(500).json({
+      message: error.message || "Lỗi hệ thống",
+    });
   }
 };
 
