@@ -22,74 +22,107 @@ const generateOrderCode = () => {
 
 export const createOrder = async (req, res) => {
   try {
-    const {
-      userId,
-      name,
-      email,
-      phone,
-      address,
-      items,
-      totalPrice,
-      fee,
-      promotion,
-      paymentMethod,
-    } = req.body;
+    const { userId, items, totalPrice, ...otherData } = req.body;
 
     // =========================
-    // check stock
+    // chuẩn bị dữ liệu sản phẩm
+    // + check stock
     // =========================
-    for (const item of items) {
-      const product = await Product.findById(item.productId);
+    const enrichedItems = await Promise.all(
+      items.map(async (item) => {
+        const productDetail = await Product.findById(item.productId);
 
-      if (!product) {
-        return res.status(404).json({
-          message: `Không tìm thấy sản phẩm ${item.name}`,
-        });
-      }
+        if (!productDetail) {
+          throw new Error(`Sản phẩm ${item.productId} không tồn tại.`);
+        }
 
-      if (product.stock < item.quantity) {
-        return res.status(400).json({
-          message: `Sản phẩm ${item.name} không đủ số lượng`,
+        // check stock
+        if (productDetail.stock < item.quantity) {
+          throw new Error(`Sản phẩm ${productDetail.name} không đủ số lượng.`);
+        }
+
+        return {
+          productId: item.productId,
+
+          name: productDetail.name,
+
+          price: productDetail.price,
+
+          quantity: item.quantity,
+
+          images: productDetail.images,
+        };
+      }),
+    );
+
+    // =========================
+    // xử lý tạo đơn
+    // =========================
+    let newOrder;
+
+    let isSaved = false;
+
+    let retryCount = 0;
+
+    const maxRetries = 5;
+
+    while (!isSaved && retryCount < maxRetries) {
+      try {
+        const orderId = generateOrderCode();
+
+        const order = new Order({
+          _id: orderId,
+
+          userId,
+
+          items: enrichedItems,
+
+          totalPrice,
+
+          ...otherData,
         });
+
+        newOrder = await order.save();
+
+        // =========================
+        // update stock + sold
+        // CHỈ update khi save order thành công
+        // =========================
+        for (const item of enrichedItems) {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: {
+              stock: -item.quantity,
+
+              sold: item.quantity,
+            },
+          });
+        }
+
+        isSaved = true;
+      } catch (error) {
+        // duplicate order id
+        if (error.code === 11000) {
+          retryCount++;
+
+          console.warn(`Trùng mã đơn hàng, thử lại lần ${retryCount}`);
+        } else {
+          throw error;
+        }
       }
     }
 
-    // =========================
-    // update stock + sold
-    // =========================
-    for (const item of items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: {
-          stock: -item.quantity,
-          sold: item.quantity,
-        },
+    if (!isSaved) {
+      return res.status(500).json({
+        message: "Không thể tạo mã đơn hàng duy nhất, vui lòng thử lại.",
       });
     }
 
-    // =========================
-    // create order
-    // =========================
-    const order = new Order({
-      userId,
-      name,
-      email,
-      phone,
-      address,
-      items,
-      totalPrice,
-      fee,
-      promotion,
-      paymentMethod,
-    });
-
-    const newOrder = await order.save();
-
     res.status(201).json(newOrder);
   } catch (error) {
-    console.error("Lỗi createOrder:", error);
+    console.error("Lỗi create order:", error);
 
     res.status(500).json({
-      message: "Lỗi hệ thống",
+      message: error.message || "Lỗi hệ thống",
     });
   }
 };
