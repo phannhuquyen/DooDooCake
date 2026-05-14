@@ -1,8 +1,8 @@
-// biểu đồ thống kê
-import express from "express";
-import { getRevenueStatistics } from "../controllers/statisticsControllers.js";
+import {
+  getRevenueStatistics,
+  getRevenueStatisticsByDay,
+} from "../controllers/statisticsControllers.js";
 
-const router = express.Router();
 router.get("/revenue", getRevenueStatistics);
 
-export default router;
+router.get("/revenue/day", getRevenueStatisticsByDay);
