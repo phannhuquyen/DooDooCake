@@ -1,6 +1,6 @@
 // biểu đồ thống kê
 import express from "express";
-import { getRevenueStatistics } from "../controllers/statisticsControllers";
+import { getRevenueStatistics } from "../controllers/statisticsControllers.js";
 
 const router = express.Router();
 router.get("/revenue", getRevenueStatistics);
