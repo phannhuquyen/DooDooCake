@@ -148,3 +148,163 @@ export const getRevenueByMonth = async (req, res) => {
     });
   }
 };
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    // ===== hôm nay =====
+    const today = new Date();
+
+    today.setHours(0, 0, 0, 0);
+
+    // ===== hôm qua =====
+    const yesterday = new Date(today);
+
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // ===================================
+    // DOANH THU
+    // ===================================
+
+    const todayRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: {
+            $ne: "cancelled",
+          },
+
+          createdAt: {
+            $gte: today,
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+
+          total: {
+            $sum: "$totalPrice",
+          },
+        },
+      },
+    ]);
+
+    const yesterdayRevenue = await Order.aggregate([
+      {
+        $match: {
+          status: {
+            $ne: "cancelled",
+          },
+
+          createdAt: {
+            $gte: yesterday,
+
+            $lt: today,
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+
+          total: {
+            $sum: "$totalPrice",
+          },
+        },
+      },
+    ]);
+
+    // ===================================
+    // ĐƠN HÀNG
+    // ===================================
+
+    const todayOrders = await Order.countDocuments({
+      status: {
+        $ne: "cancelled",
+      },
+
+      createdAt: {
+        $gte: today,
+      },
+    });
+
+    const yesterdayOrders = await Order.countDocuments({
+      status: {
+        $ne: "cancelled",
+      },
+
+      createdAt: {
+        $gte: yesterday,
+
+        $lt: today,
+      },
+    });
+
+    // ===================================
+    // USER MỚI
+    // ===================================
+
+    const todayUsers = await User.countDocuments({
+      createdAt: {
+        $gte: today,
+      },
+    });
+
+    const yesterdayUsers = await User.countDocuments({
+      createdAt: {
+        $gte: yesterday,
+
+        $lt: today,
+      },
+    });
+
+    // ===================================
+    // VALUE
+    // ===================================
+
+    const revenueToday = todayRevenue[0]?.total || 0;
+
+    const revenueYesterday = yesterdayRevenue[0]?.total || 0;
+
+    // ===================================
+    // PERCENT
+    // ===================================
+
+    const calcPercent = (todayValue, yesterdayValue) => {
+      if (yesterdayValue === 0) {
+        return 100;
+      }
+
+      return (((todayValue - yesterdayValue) / yesterdayValue) * 100).toFixed(
+        1,
+      );
+    };
+
+    res.status(200).json({
+      revenue: {
+        value: revenueToday,
+
+        percent: calcPercent(revenueToday, revenueYesterday),
+      },
+
+      orders: {
+        value: todayOrders,
+
+        percent: calcPercent(todayOrders, yesterdayOrders),
+      },
+
+      users: {
+        value: todayUsers,
+
+        percent: calcPercent(todayUsers, yesterdayUsers),
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi getDashboardStats:", error);
+
+    res.status(500).json({
+      message: "Lỗi hệ thống",
+    });
+  }
+};
