@@ -5,6 +5,7 @@ import categoryRoute from "./routes/categoriesRouters.js";
 import productRoute from "./routes/productsRouters.js";
 import loginUserRoute from "./routes/loginUserRouters.js";
 import orderRoute from "./routes/ordersRouters.js";
+import statisticsRouter from "./routes/statisticsRouters.js";
 //
 import { connectDB } from "./config/db.js";
 import dotenv from "dotenv";
@@ -30,6 +31,7 @@ app.use("/api/categories", categoryRoute);
 app.use("/api/products", productRoute);
 app.use("/api/login", loginUserRoute);
 app.use("/api/orders", orderRoute);
+app.use("/api/statistics", statisticsRouter);
 
 //
 connectDB().then(() => {
