@@ -57,7 +57,7 @@ export const createProduct = async (req, res) => {
     res.status(201).json(newProduct); //201: create thanh cong
   } catch (error) {
     console.error("Loi kho call createProduct", error);
-    res.status(500).json({ message: "Loi he thong !!!" });
+    res.status(500).json({ message: error.message || "Loi he thong !!!" });
   }
 };
 
