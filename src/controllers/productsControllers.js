@@ -225,3 +225,38 @@ export const getFeaturedProducts = async (req, res) => {
     res.status(500).json({ message: "Lỗi lấy danh sách sản phẩm nổi bật" });
   }
 };
+
+export const updateFeaturedProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { isFeatured } = req.body;
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        isFeatured,
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!product) {
+      return res.status(404).json({
+        message: "Sản phẩm không tồn tại",
+      });
+    }
+
+    res.status(200).json({
+      message: "Cập nhật sản phẩm nổi bật thành công",
+      product,
+    });
+  } catch (error) {
+    console.error("Lỗi updateFeaturedProduct:", error);
+
+    res.status(500).json({
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
