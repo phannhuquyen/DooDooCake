@@ -4,152 +4,303 @@ import User from "../models/User.js";
 // ==========================
 // THEO NGÀY
 // ==========================
-export const getRevenueByDay = async (req, res) => {
+export const getRevenueByDay = async (
+  req,
+  res,
+) => {
   try {
-    const limit = Number(req.query.limit) || 7;
+    const limit =
+      Number(req.query.limit) || 7;
 
     const startDate = new Date();
 
-    startDate.setDate(startDate.getDate() - limit);
+    startDate.setHours(
+      0,
+      0,
+      0,
+      0,
+    );
 
-    const statistics = await Order.aggregate([
-      {
-        $match: {
-          status: {
-            $ne: "cancelled",
-          },
+    startDate.setDate(
+      startDate.getDate() -
+        (limit - 1),
+    );
 
-          createdAt: {
-            $gte: startDate,
-          },
-        },
-      },
-
-      {
-        $group: {
-          _id: {
-            day: {
-              $dayOfMonth: "$createdAt",
+    const statistics =
+      await Order.aggregate([
+        {
+          $match: {
+            status: {
+              $ne: "cancelled",
             },
 
-            month: {
-              $month: "$createdAt",
-            },
-
-            year: {
-              $year: "$createdAt",
+            createdAt: {
+              $gte: startDate,
             },
           },
+        },
 
-          revenue: {
-            $sum: "$totalPrice",
-          },
+        {
+          $group: {
+            _id: {
+              day: {
+                $dayOfMonth:
+                  "$createdAt",
+              },
 
-          orders: {
-            $sum: 1,
+              month: {
+                $month:
+                  "$createdAt",
+              },
+
+              year: {
+                $year:
+                  "$createdAt",
+              },
+            },
+
+            revenue: {
+              $sum: "$totalPrice",
+            },
+
+            orders: {
+              $sum: 1,
+            },
           },
         },
-      },
 
-      {
-        $sort: {
-          "_id.year": 1,
-          "_id.month": 1,
-          "_id.day": 1,
+        {
+          $sort: {
+            "_id.year": 1,
+
+            "_id.month": 1,
+
+            "_id.day": 1,
+          },
         },
-      },
-    ]);
+      ]);
 
-    const formatted = statistics.map((item) => ({
-      label: `${item._id.day}/${item._id.month}`,
+    // =========================
+    // tạo map dữ liệu thật
+    // =========================
 
-      revenue: item.revenue,
+    const statisticsMap = {};
 
-      orders: item.orders,
-    }));
+    statistics.forEach((item) => {
+      const key = `${item._id.day}-${item._id.month}-${item._id.year}`;
 
-    res.status(200).json(formatted);
+      statisticsMap[key] = {
+        revenue: item.revenue,
+
+        orders: item.orders,
+      };
+    });
+
+    // =========================
+    // fill đủ ngày
+    // =========================
+
+    const formatted = [];
+
+    for (
+      let i = 0;
+      i < limit;
+      i++
+    ) {
+      const currentDate =
+        new Date(startDate);
+
+      currentDate.setDate(
+        startDate.getDate() + i,
+      );
+
+      const day =
+        currentDate.getDate();
+
+      const month =
+        currentDate.getMonth() + 1;
+
+      const year =
+        currentDate.getFullYear();
+
+      const key = `${day}-${month}-${year}`;
+
+      formatted.push({
+        label: `${day}/${month}`,
+
+        revenue:
+          statisticsMap[key]
+            ?.revenue || 0,
+
+        orders:
+          statisticsMap[key]
+            ?.orders || 0,
+      });
+    }
+
+    res.status(200).json(
+      formatted,
+    );
   } catch (error) {
-    console.error("Lỗi getRevenueByDay:", error);
+    console.error(
+      "Lỗi getRevenueByDay:",
+      error,
+    );
 
     res.status(500).json({
-      message: error.message || "Lỗi hệ thống",
+      message:
+        error.message ||
+        "Lỗi hệ thống",
     });
   }
 };
-
 // ==========================
 // THEO THÁNG
 // ==========================
-export const getRevenueByMonth = async (req, res) => {
-  try {
-    const limit = Number(req.query.limit) || 12;
+export const getRevenueByMonth =
+  async (req, res) => {
+    try {
+      const limit =
+        Number(req.query.limit) ||
+        12;
 
-    const startDate = new Date();
+      const startDate =
+        new Date();
 
-    startDate.setMonth(startDate.getMonth() - limit);
+      startDate.setDate(1);
 
-    const statistics = await Order.aggregate([
-      {
-        $match: {
-          status: {
-            $ne: "cancelled",
-          },
+      startDate.setHours(
+        0,
+        0,
+        0,
+        0,
+      );
 
-          createdAt: {
-            $gte: startDate,
-          },
-        },
-      },
+      startDate.setMonth(
+        startDate.getMonth() -
+          (limit - 1),
+      );
 
-      {
-        $group: {
-          _id: {
-            month: {
-              $month: "$createdAt",
+      const statistics =
+        await Order.aggregate([
+          {
+            $match: {
+              status: {
+                $ne: "cancelled",
+              },
+
+              createdAt: {
+                $gte: startDate,
+              },
             },
+          },
 
-            year: {
-              $year: "$createdAt",
+          {
+            $group: {
+              _id: {
+                month: {
+                  $month:
+                    "$createdAt",
+                },
+
+                year: {
+                  $year:
+                    "$createdAt",
+                },
+              },
+
+              revenue: {
+                $sum:
+                  "$totalPrice",
+              },
+
+              orders: {
+                $sum: 1,
+              },
             },
           },
 
-          revenue: {
-            $sum: "$totalPrice",
+          {
+            $sort: {
+              "_id.year": 1,
+
+              "_id.month": 1,
+            },
           },
+        ]);
 
-          orders: {
-            $sum: 1,
-          },
-        },
-      },
+      // =========================
+      // map dữ liệu thật
+      // =========================
 
-      {
-        $sort: {
-          "_id.year": 1,
-          "_id.month": 1,
-        },
-      },
-    ]);
+      const statisticsMap = {};
 
-    const formatted = statistics.map((item) => ({
-      label: `T${item._id.month}`,
+      statistics.forEach((item) => {
+        const key = `${item._id.month}-${item._id.year}`;
 
-      revenue: item.revenue,
+        statisticsMap[key] = {
+          revenue: item.revenue,
 
-      orders: item.orders,
-    }));
+          orders: item.orders,
+        };
+      });
 
-    res.status(200).json(formatted);
-  } catch (error) {
-    console.error("Lỗi getRevenueByMonth:", error);
+      // =========================
+      // fill đủ tháng
+      // =========================
 
-    res.status(500).json({
-      message: error.message || "Lỗi hệ thống",
-    });
-  }
-};
+      const formatted = [];
 
+      for (
+        let i = 0;
+        i < limit;
+        i++
+      ) {
+        const currentDate =
+          new Date(startDate);
+
+        currentDate.setMonth(
+          startDate.getMonth() + i,
+        );
+
+        const month =
+          currentDate.getMonth() +
+          1;
+
+        const year =
+          currentDate.getFullYear();
+
+        const key = `${month}-${year}`;
+
+        formatted.push({
+          label: `T${month}`,
+
+          revenue:
+            statisticsMap[key]
+              ?.revenue || 0,
+
+          orders:
+            statisticsMap[key]
+              ?.orders || 0,
+        });
+      }
+
+      res.status(200).json(
+        formatted,
+      );
+    } catch (error) {
+      console.error(
+        "Lỗi getRevenueByMonth:",
+        error,
+      );
+
+      res.status(500).json({
+        message:
+          error.message ||
+          "Lỗi hệ thống",
+      });
+    }
+  };
 // ==========================
 // DASHBOARD
 // ==========================
