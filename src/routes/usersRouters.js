@@ -11,6 +11,7 @@ import {
   createCartItem,
   deleteCartItem,
   updateUserPassword,
+  changePassword,
 } from "../controllers/usersControllers.js";
 
 const router = express.Router();
@@ -37,6 +38,6 @@ router.post("/:userId/cart", createCartItem);
 
 router.delete("/:userId/cart/:productId", deleteCartItem);
 
-router.patch("/change-password/:id");
+router.patch("/change-password/:id", changePassword);
 
 export default router;
