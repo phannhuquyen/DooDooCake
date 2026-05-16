@@ -37,4 +37,6 @@ router.post("/:userId/cart", createCartItem);
 
 router.delete("/:userId/cart/:productId", deleteCartItem);
 
+router.patch("/change-password/:id");
+
 export default router;

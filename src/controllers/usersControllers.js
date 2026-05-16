@@ -363,3 +363,41 @@ export const deleteCartItem = async (req, res) => {
     return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
+export const changePassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { oldPassword, newPassword } = req.body;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Người dùng không tồn tại",
+      });
+    }
+
+    // check mật khẩu cũ
+    if (user.password !== oldPassword) {
+      return res.status(400).json({
+        message: "Mật khẩu cũ không đúng",
+      });
+    }
+
+    // update password
+    user.password = newPassword;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Đổi mật khẩu thành công",
+    });
+  } catch (error) {
+    console.error("Lỗi changePassword:", error);
+
+    res.status(500).json({
+      message: error.message || "Lỗi hệ thống",
+    });
+  }
+};
