@@ -1,4 +1,6 @@
 import express from "express";
+import { Server } from "socket.io";
+
 
 import userRoute from "./routes/usersRouters.js";
 import categoryRoute from "./routes/categoriesRouters.js";
@@ -41,5 +43,9 @@ connectDB().then(() => {
   });
 });
 
-// còn 1 vài API nữa:
-// __thêm đơn hàng
+//socket
+export const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});

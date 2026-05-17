@@ -252,6 +252,7 @@ export const updateFeaturedProduct = async (req, res) => {
       message: "Cập nhật sản phẩm nổi bật thành công",
       product,
     });
+    io.emit("featured-updated", product);
   } catch (error) {
     console.error("Lỗi updateFeaturedProduct:", error);
 

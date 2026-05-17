@@ -1,6 +1,7 @@
 import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
+import { io } from "../server.js";
 //cho admin
 export const getAllOrders = async (req, res) => {
   try {
@@ -83,6 +84,7 @@ export const createOrder = async (req, res) => {
         });
 
         newOrder = await order.save();
+        io.emit("new-order", newOrder);
 
         // =========================
         // update stock + sold
@@ -141,6 +143,7 @@ export const updateOrder = async (req, res) => {
       // return json.status(404).json({ message: "Order khong ton tai" });
       return res.status(404).json({ message: "Đơn hàng không tồn tại" });
     res.status(200).json(updateOrder);
+    io.emit("update-order-status", updateOrder);
   } catch (err) {
     console.error("Loi khi call updateOrder");
     res.status(500).json({ message: "Loi he thong!!" });
@@ -230,6 +233,7 @@ export const cancelOrder = async (req, res) => {
     order.status = "cancelled";
 
     await order.save();
+    io.emit("cancel-order", order);
 
     res.status(200).json({
       message: "Hủy đơn hàng thành công",
